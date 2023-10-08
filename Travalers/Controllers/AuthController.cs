@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Travalers.DTOs.Common;
 using Travalers.DTOs.User;
 using Travalers.Entities;
 using Travalers.Repository;
@@ -12,7 +11,7 @@ using Travalers.Services;
 
 namespace Travalers.Controllers
 {
-    
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -36,54 +35,73 @@ namespace Travalers.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserDto userDto)
         {
+            var response = new RegisterResponseDto();
+
             if (userDto.Password != userDto.ConfirmPassword)
             {
-                return BadRequest("Passwords do not match.");
+                response.IsSuccess = false;
+                response.Message = "Passwords do not match.";
+                return Ok(response);
             }
 
             var existingUser = await _userRepository.GetUserByNICAsync(userDto.NIC);
 
             if (existingUser != null)
             {
-                return BadRequest("NIC already exists.");
+                response.IsSuccess = false;
+                response.Message = "NIC already exists.";
+                return Ok(response);
             }
 
             string passwordHash = HashPassword(userDto.Password);
 
             var newUser = new User
             {
-                Id = userDto.NIC, 
+                Id = userDto.NIC,
                 Username = userDto.Username,
                 PasswordHash = passwordHash,
                 UserType = (Enums.UserType)1,
                 NIC = userDto.NIC,
                 IsActive = true
-
             };
 
             await _userRepository.CreateUserAsync(newUser);
 
-            return Ok("Registration successful.");
+            response.IsSuccess = true;
+            response.Message = "Registration successful.";
+            response.UserType = newUser.UserType;
+
+            return Ok(response);
         }
+
 
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto userDto)
         {
+
+            var response = new RegisterResponseDto();
+
             var user = await _userRepository.GetUserByNICAsync(userDto.NIC);
 
             if (user == null)
             {
-                return BadRequest("Invalid username or password.");
+                response.IsSuccess = false;
+                response.Message = "Invalid username or password.";
+                return Ok(response);
             }
 
             if (VerifyPassword(userDto.Password, user.PasswordHash))
             {
                 var token = GenerateJwtToken(user.Id, user.NIC);
-                return Ok(new { Token = token });
+                response.IsSuccess = true;
+                response.Message = "Welcome Travaler.";
+                response.Token = token;
+                return Ok(response);
             }
-
-            return BadRequest("Invalid username or password.");
+            response.IsSuccess = false;
+            response.Message = "Invalid username or password.";
+            return Ok(response);
         }
 
         [HttpPost("updateUser")]
