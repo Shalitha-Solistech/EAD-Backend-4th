@@ -8,5 +8,7 @@ namespace Travalers.DTOs.User
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }
         public string NIC { get; set; }
+        public string? Address { get; set; }
+        public string? TelNo { get; set; }
     }
 }

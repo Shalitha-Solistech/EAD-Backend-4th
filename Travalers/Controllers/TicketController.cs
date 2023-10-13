@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Travalers.DTOs.Common;
 using Travalers.DTOs.Ticket;
 using Travalers.Entities;
 using Travalers.Repository;
@@ -34,6 +35,8 @@ namespace Travalers.Controllers
         {
             try
             {
+                var response = new ResposenDto();
+
                 if (string.IsNullOrEmpty(reserveTicketDto.Id))
                 {
                     var train = await _trainRepository.GetTrainById(reserveTicketDto.TrainId);
@@ -69,26 +72,41 @@ namespace Travalers.Controllers
 
                                 await _trainRepository.UpdateTrainAsync(train);
 
-                                return Ok("Ticket Reserved");
+                                response.IsSuccess = true;
+                                response.Message = "Ticket Reserved Successfully";
+
+                                return Ok(response);
                             }
                             else
                             {
-                                return BadRequest("Too Early to Make a Researvation.");
+                                response.IsSuccess = false;
+                                response.Message = "Too Early to Make a Reservation.";
+
+                                return Ok(response);
                             }
                         }
                         else
                         {
-                            return BadRequest("Train Seats are Full");
+                            response.IsSuccess = false;
+                            response.Message = "Train Seats are Full";
+
+                            return Ok(response);
                         }
                     }
                     else
                     {
-                        return BadRequest("Maximun Tickets Per One Time iS four..");
+                        response.IsSuccess = false;
+                        response.Message = "Maximum Tickets Per One Time iS four.";
+
+                        return Ok(response);
                     }  
                 }
                 else
                 {
-                    return BadRequest();
+                    response.IsSuccess = false;
+                    response.Message = "Error Occurred";
+
+                    return Ok(response);
                 }
             }catch (Exception ex)
             {
@@ -147,6 +165,7 @@ namespace Travalers.Controllers
 
                     var reservationDto = new ReservationDto
                     {
+                        Id = ticket.Id,
                         TrainId = ticket.TrainId,
                         UserId = ticket.UserId,
                         UserName = userName,
@@ -238,13 +257,17 @@ namespace Travalers.Controllers
         {
             try
             {
+                var response = new RegisterResponseDto();
+
                 var ticket = await _ticketRepository.GetTicketByIdAsync(id);
 
                 var train = await _trainRepository.GetTrainById(ticket.TrainId);
 
                 if (ticket == null)
                 {
-                    return NotFound("Ticket not Found.");
+                    response.IsSuccess = false;
+                    response.Message = "Ticket not Found.";
+                    return Ok(response);
                 }
 
                 else
@@ -257,11 +280,16 @@ namespace Travalers.Controllers
 
                         await _trainRepository.UpdateTrainAsync(train);
 
-                        return Ok("Ticket Canceled.");
+                        response.IsSuccess = true;
+                        response.Message = "Reservation Canceled Successfully.";
+                        return Ok(response);
+
                     }
                     else
                     {
-                        return BadRequest("You cannot cancel a ticket now. Minimun date to cancel a ticket is at least five days before the train depature. ");
+                        response.IsSuccess = false;
+                        response.Message = "You cannot cancel a ticket now. Minimum date to cancel a ticket is at least five days before the train departure.";
+                        return Ok(response);
                     }
                 }
             }

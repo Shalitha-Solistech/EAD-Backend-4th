@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Travalers.DTOs.Common;
 using Travalers.DTOs.Train;
 using Travalers.DTOs.User;
 using Travalers.Entities;
@@ -31,7 +32,8 @@ namespace Travalers.Controllers
         {
             try
             {
-               
+                var response = new ResposenDto();
+
                 if (string.IsNullOrEmpty(trainDto.Id))
                 {
 
@@ -49,7 +51,9 @@ namespace Travalers.Controllers
 
                     await _trainRepository.CreateTrainAsync(train);
 
-                    return Ok("Train Successfully Added to the System.");
+                    response.IsSuccess = true;
+                    response.Message = "Train Successfully Added to the System.";
+                    return Ok(response);
                 }
                 else
                 {
@@ -66,7 +70,10 @@ namespace Travalers.Controllers
 
                     await _trainRepository.UpdateTrainAsync(train);
 
-                    return Ok("Train Successfully Updated.");
+                    response.IsSuccess = true;
+                    response.Message = "Train Successfully Updated.";
+
+                    return Ok(response);
                 }
             }catch(Exception ex)
             {
@@ -103,6 +110,8 @@ namespace Travalers.Controllers
         [HttpDelete("DeleteTrainById{id}")]
         public async Task<ActionResult> DeleteTrain(string id)
         {
+            var response = new ResposenDto();
+
             var train = await _trainRepository.GetTrainById(id);
 
             if(train == null)
@@ -118,11 +127,16 @@ namespace Travalers.Controllers
                 {
                     await _trainRepository.DeleteTrainAsync(id);
 
-                    return Ok("Train Deleted Successfully");
+                    response.IsSuccess = true;
+                    response.Message = "Train Deleted Successfully";
+
+                    return Ok(response);
                 }
                 else
                 {
-                    return BadRequest("Train seats are already booked.");
+                    response.IsSuccess = false;
+                    response.Message = "Train seats are already booked.";
+                    return Ok(response);
                 }
             }
         }

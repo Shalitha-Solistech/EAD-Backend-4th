@@ -35,7 +35,6 @@ namespace Travalers.Repository
             {
                 UserId = userId,
                 SeatNumber = seatNumber
-                // Other ticket properties can be set here
             };
 
             await CreateTicketAsync(ticket);

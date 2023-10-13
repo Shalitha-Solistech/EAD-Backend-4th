@@ -44,6 +44,7 @@ namespace Travalers.Controllers
                 return Ok(response);
             }
 
+            // Check if a user with the same NIC exists
             var existingUser = await _userRepository.GetUserByNICAsync(userDto.NIC);
 
             if (existingUser != null)
@@ -57,22 +58,25 @@ namespace Travalers.Controllers
 
             var newUser = new User
             {
-                Id = userDto.NIC,
+                
                 Username = userDto.Username,
                 PasswordHash = passwordHash,
                 UserType = (Enums.UserType)1,
                 NIC = userDto.NIC,
-                IsActive = true
+                IsActive = true,
+                Address = userDto.Address,
+                TelNo = userDto.TelNo,
             };
 
             await _userRepository.CreateUserAsync(newUser);
 
             response.IsSuccess = true;
-            response.Message = "Registration successful.";
+            response.Message = "Registration.";
             response.UserType = newUser.UserType;
 
             return Ok(response);
         }
+
 
 
 
@@ -91,31 +95,53 @@ namespace Travalers.Controllers
                 return Ok(response);
             }
 
-            if (VerifyPassword(userDto.Password, user.PasswordHash))
+            if(user.IsActive == false)
             {
-                var token = GenerateJwtToken(user.Id, user.NIC);
-                response.IsSuccess = true;
-                response.Message = "Welcome Travaler.";
-                response.Token = token;
+                response.IsSuccess = false;
+                response.Message = "User Is Deactivated.";
                 return Ok(response);
             }
-            response.IsSuccess = false;
-            response.Message = "Invalid username or password.";
-            return Ok(response);
+            else
+            {
+                if (VerifyPassword(userDto.Password, user.PasswordHash))
+                {
+                    var token = GenerateJwtToken(user.Id, user.NIC);
+                    response.IsSuccess = true;
+                    response.Message = "Welcome Travaler.";
+                    response.Token = token;
+                    response.UserType = user.UserType;
+                    return Ok(response);
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Invalid username or password.";
+                    return Ok(response);
+                }
+                
+            }   
         }
 
         [HttpPost("updateUser")]
         public async Task<IActionResult> UpdateUser([FromBody] ProfileDto userDto)
         {
+            var response = new ResposenDto();
+
             var userId = _currentUserService.UserId;
 
             var existingUser = await _userRepository.GetUserByNICAsync(userId);
 
             existingUser.Username = userDto.Username;
+            existingUser.Address = userDto.Address;
+            existingUser.TelNo = userDto.TelNo;
+
+            response.IsSuccess = true;
+
+            response.Message = "Profile Update Successful.";
 
             await _userRepository.UpdateUserAsync(existingUser);
 
-            return Ok("Registration successful.");
+            return Ok(response);
         }
 
         [HttpGet("GetUserById")]
@@ -149,13 +175,16 @@ namespace Travalers.Controllers
         [HttpDelete("deactivateUser{id}")]
         public async Task<ActionResult> DeactivateUser(string id)
         {
-            var user = await _userRepository.GetUserById(id);
 
-            
+            var response = new ResposenDto();
+
+            var user = await _userRepository.GetUserById(id);
 
             if (user == null)
             {
-                return NotFound("User not Found");
+                response.IsSuccess = false;
+                response.Message = "User not Found";
+                return Ok(response);
             }
 
             else
@@ -170,7 +199,9 @@ namespace Travalers.Controllers
 
                     if (ticketsCount > 0)
                     {
-                        return BadRequest("Cannot Deactivate Due To This User Have Tickets Already");
+                        response.IsSuccess = false;
+                        response.Message = "Cannot Deactivate Due To This User Have Tickets Already";
+                        return Ok(response);
                     }
                     else
                     {
@@ -180,8 +211,30 @@ namespace Travalers.Controllers
                 
                 await _userRepository.UpdateUserAsync(user);
 
-                return Ok("Train Deleted Successfully");
+                response.IsSuccess = true;
+                response.Message = "User Active Status Changed";
+                return Ok(response);
             }
+        }
+
+        [HttpDelete("DeactivateUserByUser")]
+        public async Task<IActionResult> DeactivateUserByUser()
+        {
+            var response = new ResposenDto();
+
+            var userId = _currentUserService.UserId;
+
+            var existingUser = await _userRepository.GetUserByNICAsync(userId);
+
+            existingUser.IsActive = false;
+
+            response.IsSuccess = true;
+
+            response.Message = "Profile Deactivated Successful.";
+
+            await _userRepository.UpdateUserAsync(existingUser);
+
+            return Ok(response);
         }
         private string HashPassword(string password)
         {

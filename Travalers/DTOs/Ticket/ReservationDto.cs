@@ -2,6 +2,7 @@
 {
     public class ReservationDto
     {
+        public string? Id { get; set; }
         public string UserId { get; set; }
         public string TrainId { get; set; }
         public string UserName { get; set; }

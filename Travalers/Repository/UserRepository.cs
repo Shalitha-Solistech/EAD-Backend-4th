@@ -25,9 +25,9 @@ namespace Travalers.Repository
             await _usersCollection.InsertOneAsync(user);
         }
 
-        public async Task<User> GetUserById(string id)
+        public async Task<User> GetUserById(string nic)
         {
-            var filter = Builders<User>.Filter.Eq(u => u.Id, id);
+            var filter = Builders<User>.Filter.Eq(u => u.NIC, nic);
             return await _usersCollection.Find(filter).FirstOrDefaultAsync();
         }
 
@@ -38,7 +38,7 @@ namespace Travalers.Repository
 
         public async Task UpdateUserAsync(User user)
         {
-            var filter = Builders<User>.Filter.Eq(t => t.Id, user.Id);
+            var filter = Builders<User>.Filter.Eq(t => t.NIC, user.NIC);
             var options = new ReplaceOptions { IsUpsert = false };
             await _usersCollection.ReplaceOneAsync(filter, user, options);
         }

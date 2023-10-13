@@ -7,6 +7,7 @@ namespace Travalers.Entities
     public class User
     {
         [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
 
         [BsonElement("Username")]
@@ -19,6 +20,12 @@ namespace Travalers.Entities
 
         [BsonElement("NIC")]
         public string NIC { get; set; }
+
+        [BsonElement("Address")]
+        public string? Address { get; set; }
+
+        [BsonElement("TelNo")]
+        public string? TelNo { get; set; }
 
         [BsonElement("IsActive")]
         public bool IsActive { get; set; }
